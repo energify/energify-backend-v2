@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { StoreUserDto } from './dto/store-user.dto';
 import { UpdatePricesDto } from './dto/update-prices.dto';
+import { IPrice } from './interfaces/iprices.interface';
 import { User } from './schemas/user.schema';
 
 @Injectable()
@@ -22,7 +23,7 @@ export class UsersService {
   }
 
   async findPricesById(id: string) {
-    return this.userModel.findOne({ id }, { buyPrice: 1, sellPrice: 1, _id: 0 });
+    return this.userModel.findOne({ id }, { buyPrice: 1, sellPrice: 1 });
   }
 
   async findAllPrices() {

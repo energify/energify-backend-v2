@@ -58,7 +58,7 @@ describe('TransactionsService', () => {
         amount: Math.random() < 0.5 ? Math.random() * -10 : Math.random() * 10,
         consumerId: Math.random() < 0.5 ? 'abc' : 'def',
         prosumerId: Math.random() < 0.5 ? 'abc' : 'def',
-        performedAt: new Date(),
+        performedAt: new Date(Math.random() < 0.5 ? '12-22-2020' : '12-23-2020'),
         pricePerKw: 1.1,
       });
     }
@@ -77,11 +77,16 @@ describe('TransactionsService', () => {
   it('should find amounts by user and date interval', async () => {
     const { consumed, produced } = await service.findAmountsByUserId(
       'abc',
-      subHours(new Date(), 12),
-      new Date(),
+      subHours(new Date('12-22-2020'), 12),
+      new Date('12-22-2020'),
     );
 
     expect(consumed === 0).toBeFalsy();
     expect(produced === 0).toBeFalsy();
+  });
+
+  it('should find price history for time interval = 1d', async () => {
+    const priceHistory = await service.findPriceHistory(new Date('12-24-2020'), '1d');
+    console.log(priceHistory);
   });
 });
