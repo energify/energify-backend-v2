@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Interval } from '@nestjs/schedule';
 import { fromUnixTime } from 'date-fns';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { dateTo15SecondsInterval, mergeArrays } from '../common/util';
 import { IPrice } from '../users/interfaces/iprices.interface';
 import { UsersService } from '../users/users.service';
@@ -18,11 +18,19 @@ export class MeasuresService {
   ) {}
 
   async store(userId: string, dto: StoreMeasureDto) {
-    return this.measureModel.create({ ...dto, userId, measuredAt: fromUnixTime(dto.timestamp) });
+    return this.measureModel.create({
+      ...dto,
+      userId: Types.ObjectId(userId),
+      measuredAt: fromUnixTime(dto.timestamp),
+    });
   }
 
   async storeBulk(userId: string, dto: StoreMeasureDto[]) {
-    const dtoWithUserId = dto.map((e) => ({ ...e, userId, measuredAt: fromUnixTime(e.timestamp) }));
+    const dtoWithUserId = dto.map((e) => ({
+      ...e,
+      userId: Types.ObjectId(userId),
+      measuredAt: fromUnixTime(e.timestamp),
+    }));
     return this.measureModel.insertMany(dtoWithUserId);
   }
 
