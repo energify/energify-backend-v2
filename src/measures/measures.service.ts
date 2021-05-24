@@ -6,6 +6,7 @@ import { dateTo15SecondsInterval, mergeArrays } from '../common/util';
 import { IPrice } from '../users/interfaces/iprices.interface';
 import { UsersService } from '../users/users.service';
 import { StoreMeasureDto } from './dto/store-measure.dto';
+import { LpfLafPolicy } from './models/lpflaf-policy.model';
 import { MatchingPolicy } from './models/matching-policy.model';
 import { Measure } from './schemas/measure.schema';
 
@@ -38,11 +39,11 @@ export class MeasuresService {
   }
 
   @Interval(1000)
-  async match(policy: MatchingPolicy, measures?: Measure[], prices?: IPrice[]) {
+  async match(measures?: Measure[], prices?: IPrice[]) {
     const { start, end } = dateTo15SecondsInterval(new Date('12-22-2020 08:30:00'));
     measures = measures ?? (await this.findByDateInterval(start, end));
     prices = prices ?? (await this.usersService.findAllPrices());
     const orders = mergeArrays<Measure, IPrice>(measures, prices, 'userId', '_id');
-    console.log(policy.match(orders));
+    console.log(new LpfLafPolicy().match(orders));
   }
 }
