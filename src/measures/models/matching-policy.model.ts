@@ -38,7 +38,7 @@ export abstract class MatchingPolicy {
         matches.push({
           value: buy.value * -1,
           consumerId: buy.userId,
-          prosumerId: 'PUBLIC_GRID',
+          prosumerId: undefined,
           matchedAt: buy.measuredAt,
           pricePerKw: 1.2,
         });
@@ -48,7 +48,7 @@ export abstract class MatchingPolicy {
     for (const sell of this.sells.filter((s) => s.value !== 0)) {
       matches.push({
         value: sell.value,
-        consumerId: 'PUBLIC_GRID',
+        consumerId: undefined,
         prosumerId: sell.userId,
         matchedAt: sell.measuredAt,
         pricePerKw: 1.2,
