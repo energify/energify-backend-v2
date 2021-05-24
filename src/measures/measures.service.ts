@@ -18,11 +18,11 @@ export class MeasuresService {
   ) {}
 
   async store(userId: string, dto: StoreMeasureDto) {
-    return this.measureModel.create({ ...dto, userId });
+    return this.measureModel.create({ ...dto, userId, measuredAt: new Date(dto.timestamp) });
   }
 
   async storeBulk(userId: string, dto: StoreMeasureDto[]) {
-    const dtoWithUserId = dto.map((e) => ({ ...e, userId }));
+    const dtoWithUserId = dto.map((e) => ({ ...e, userId, timestamp: new Date(e.timestamp) }));
     return this.measureModel.insertMany(dtoWithUserId);
   }
 
