@@ -4,7 +4,6 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { hash, compare } from 'bcrypt';
 import { decode, sign, verify } from 'jsonwebtoken';
-import { User } from '../users/schemas/user.schema';
 
 @Injectable()
 export class AuthService {
@@ -17,7 +16,7 @@ export class AuthService {
       throw new BadRequestException('Provided credentials are not correct.');
     }
 
-    return sign({ ...this.payload(user) }, 'test');
+    return { accessToken: sign({ id: user.id, email: user.email, name: user.name }, 'test') };
   }
 
   async register(dto: RegisterDto) {
@@ -41,9 +40,5 @@ export class AuthService {
 
   decode(token: string) {
     return decode(token);
-  }
-
-  private async payload(user: User) {
-    return { name: user.name, email: user.email };
   }
 }
