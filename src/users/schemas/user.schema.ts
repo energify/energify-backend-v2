@@ -14,6 +14,15 @@ export class User {
   @Prop({ required: true })
   password: string;
 
+  @Prop()
+  birthdate: Date;
+
+  @Prop()
+  cc: string;
+
+  @Prop()
+  nif: string;
+
   @Prop({ default: 1.2 })
   buyPrice: number;
 

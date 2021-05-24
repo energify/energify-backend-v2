@@ -16,13 +16,13 @@ export class MeasuresGateway implements OnGatewayConnection {
   constructor(private measuresService: MeasuresService, private authService: AuthService) {}
 
   handleConnection(client: Socket) {
-    /*const token = client.handshake.headers.authorization;
+    const token = client.handshake.headers.authorization;
     console.log(client.handshake);
     if (this.authService.verify(token)) {
       (client.handshake as any).user = this.authService.decode(token);
     } else {
       client.disconnect();
-    }*/
+    }
   }
 
   @SubscribeMessage('store')
@@ -30,7 +30,7 @@ export class MeasuresGateway implements OnGatewayConnection {
     return this.measuresService.store(user.id, dto);
   }
 
-  @SubscribeMessage('storeBulk')
+  @SubscribeMessage('store-bulk')
   storeBulk(@WsAuthedUser() user: IUser, @MessageBody() dto: StoreMeasureDto[]) {
     return this.measuresService.storeBulk(user.id, dto);
   }

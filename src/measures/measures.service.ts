@@ -34,7 +34,7 @@ export class MeasuresService {
   }
 
   async deleteAll() {
-    return this.measureModel.deleteMany({}).exec();
+    return this.measureModel.deleteMany();
   }
 
   async match(policy: MatchingPolicy, measures?: Measure[], prices?: IPrice[]) {
