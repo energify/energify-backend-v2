@@ -29,6 +29,8 @@
     "@nestjs/platform-socket.io": "^7.6.17",
     "@nestjs/websockets": "^7.6.17",
     "bcrypt": "^5.0.1",
+    "class-transformer": "^0.4.0",
+    "class-validator": "^0.13.1",
     "date-fns": "^2.21.3",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.12.10",
