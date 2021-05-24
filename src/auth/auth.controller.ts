@@ -1,5 +1,6 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { Public } from './decorators/public.decorator';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
@@ -13,6 +14,7 @@ export class AuthController {
   }
 
   @Post('register')
+  @Public()
   async register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }

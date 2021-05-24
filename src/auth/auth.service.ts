@@ -5,7 +5,6 @@ import { RegisterDto } from './dto/register.dto';
 import { hash, compare } from 'bcrypt';
 import { decode, sign, verify } from 'jsonwebtoken';
 import { User } from '../users/schemas/user.schema';
-import { IUser } from './interfaces/iuser.interface';
 
 @Injectable()
 export class AuthService {

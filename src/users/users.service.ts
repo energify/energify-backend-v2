@@ -36,6 +36,6 @@ export class UsersService {
   }
 
   async deleteAll() {
-    return this.userModel.deleteMany({}).exec();
+    return this.userModel.deleteMany();
   }
 }
