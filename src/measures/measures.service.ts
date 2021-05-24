@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Interval } from '@nestjs/schedule';
+import { fromUnixTime } from 'date-fns';
 import { Model } from 'mongoose';
 import { dateTo15SecondsInterval, mergeArrays } from '../common/util';
 import { IPrice } from '../users/interfaces/iprices.interface';
@@ -17,20 +18,20 @@ export class MeasuresService {
   ) {}
 
   async store(userId: string, dto: StoreMeasureDto) {
-    return this.measureModel.create({ ...dto, userId, measuredAt: new Date(dto.timestamp) });
+    return this.measureModel.create({ ...dto, userId, measuredAt: fromUnixTime(dto.timestamp) });
   }
 
   async storeBulk(userId: string, dto: StoreMeasureDto[]) {
-    const dtoWithUserId = dto.map((e) => ({ ...e, userId, measuredAt: new Date(e.timestamp) }));
+    const dtoWithUserId = dto.map((e) => ({ ...e, userId, measuredAt: fromUnixTime(e.timestamp) }));
     return this.measureModel.insertMany(dtoWithUserId);
   }
 
   async findAll() {
-    return this.measureModel.find().exec();
+    return this.measureModel.find();
   }
 
   async deleteByIds(ids: string[]) {
-    return this.measureModel.remove({ id: { $in: ids } });
+    return this.measureModel.deleteMany({ id: { $in: ids } });
   }
 
   async findByDateInterval(start: Date, end: Date) {
@@ -47,10 +48,20 @@ export class MeasuresService {
 
   @Interval(2000)
   async match(measures?: Measure[], prices?: IPrice[]) {
-    const { measuredAt } = (await this.findOldest())[0];
-    const { start, end } = dateTo15SecondsInterval(new Date(measuredAt));
+    const measure = (await this.findOldest())[0];
+
+    if (!measure) {
+      return;
+    }
+
+    const { start, end } = dateTo15SecondsInterval(new Date(measure.measuredAt));
     measures = measures ?? (await this.findByDateInterval(start, end));
     prices = prices ?? (await this.usersService.findAllPrices());
+
+    console.log({ start, end });
+    console.log(measures);
+    console.log(prices);
+
     const orders = mergeArrays<Measure, IPrice>(measures, prices, 'userId', '_id');
     console.log(new LpfLafPolicy().match(orders));
     await this.deleteByIds(measures.map((m) => m._id));
