@@ -54,7 +54,7 @@ export class MeasuresService {
     return this.measureModel.deleteMany();
   }
 
-  @Interval(2000)
+  @Interval(100)
   async match(measures?: Measure[], prices?: IPrice[]) {
     const measure = (await this.findOldest())[0];
 
