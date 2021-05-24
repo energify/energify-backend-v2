@@ -22,7 +22,7 @@ export class MeasuresService {
   }
 
   async storeBulk(userId: string, dto: StoreMeasureDto[]) {
-    const dtoWithUserId = dto.map((e) => ({ ...e, userId, timestamp: new Date(e.timestamp) }));
+    const dtoWithUserId = dto.map((e) => ({ ...e, userId, measuredAt: new Date(e.timestamp) }));
     return this.measureModel.insertMany(dtoWithUserId);
   }
 
