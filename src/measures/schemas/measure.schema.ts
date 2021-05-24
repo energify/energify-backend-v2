@@ -5,6 +5,8 @@ export type MeasureDocument = Measure & Document;
 
 @Schema()
 export class Measure {
+  _id: string;
+
   @Prop({ required: true })
   value: number;
 

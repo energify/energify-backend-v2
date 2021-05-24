@@ -17,7 +17,6 @@ export class MeasuresGateway implements OnGatewayConnection {
 
   handleConnection(client: Socket) {
     const token = client.handshake.headers.authorization;
-    console.log(client.handshake);
     if (this.authService.verify(token)) {
       (client.handshake as any).user = this.authService.decode(token);
     } else {
