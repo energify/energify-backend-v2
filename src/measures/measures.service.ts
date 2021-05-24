@@ -35,7 +35,7 @@ export class MeasuresService {
   }
 
   async findAll() {
-    return this.measureModel.find();
+    return this.measureModel.find().lean();
   }
 
   async deleteByIds(ids: string[]) {
@@ -43,11 +43,11 @@ export class MeasuresService {
   }
 
   async findByDateInterval(start: Date, end: Date) {
-    return this.measureModel.find({ measuredAt: { $gte: start, $lte: end } });
+    return this.measureModel.find({ measuredAt: { $gte: start, $lte: end } }).lean();
   }
 
   async findOldest() {
-    return this.measureModel.find({}).sort({ measuredAt: 1 }).limit(1);
+    return this.measureModel.find({}).sort({ measuredAt: 1 }).limit(1).lean();
   }
 
   async deleteAll() {
@@ -66,10 +66,8 @@ export class MeasuresService {
     measures = measures ?? (await this.findByDateInterval(start, end));
     prices = prices ?? (await this.usersService.findAllPrices());
 
-    console.log({ start, end });
-
     const orders = mergeArrays<Measure, IPrice>(measures, prices, 'userId', '_id');
-
+    console.log({ start, end });
     console.log(new LpfLafPolicy().match(orders));
     await this.deleteByIds(measures.map((m) => m._id.toHexString()));
   }

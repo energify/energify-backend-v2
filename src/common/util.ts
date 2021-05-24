@@ -19,8 +19,9 @@ export function mergeArrays<T extends object, K extends object>(
   arr1Key: string,
   arr2Key: string,
 ) {
-  const arr2Keys = arr2.map((el) => el[arr2Key]);
-  const intersection = arr1.filter((el) => arr2Keys.includes(el[arr1Key]));
+  const arr2Keys = arr2.map((el) => JSON.stringify(el[arr2Key]));
+  console.log(arr2Keys);
+  const intersection = arr1.filter((el) => arr2Keys.includes(JSON.stringify(el[arr1Key])));
   return intersection.map((el, i) => ({ ...el, ...arr2[i] })) as (T & K)[];
 }
 
