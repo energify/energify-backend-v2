@@ -1,11 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type MeasureDocument = Measure & Document;
 
 @Schema()
 export class Measure {
-  _id: string;
+  _id: Types.ObjectId;
 
   @Prop({ required: true })
   value: number;
@@ -14,7 +14,7 @@ export class Measure {
   measuredAt: Date;
 
   @Prop({ required: true, index: true })
-  userId: string;
+  userId: Types.ObjectId;
 }
 
 export const MeasureSchema = SchemaFactory.createForClass(Measure);

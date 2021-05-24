@@ -1,5 +1,7 @@
+import { Types } from 'mongoose';
+
 export interface IPrice {
-  _id?: string;
+  _id?: Types.ObjectId;
   buyPrice: number;
   sellPrice: number;
 }

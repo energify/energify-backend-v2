@@ -31,7 +31,7 @@ export class MeasuresService {
   }
 
   async deleteByIds(ids: string[]) {
-    return this.measureModel.deleteMany({ id: { $in: ids } });
+    return this.measureModel.deleteMany({ _id: { $in: ids } });
   }
 
   async findByDateInterval(start: Date, end: Date) {
@@ -59,11 +59,10 @@ export class MeasuresService {
     prices = prices ?? (await this.usersService.findAllPrices());
 
     console.log({ start, end });
-    console.log(measures);
-    console.log(prices);
 
     const orders = mergeArrays<Measure, IPrice>(measures, prices, 'userId', '_id');
+
     console.log(new LpfLafPolicy().match(orders));
-    await this.deleteByIds(measures.map((m) => m._id));
+    await this.deleteByIds(measures.map((m) => m._id.toHexString()));
   }
 }
