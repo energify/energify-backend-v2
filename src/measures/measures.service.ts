@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { Interval } from '@nestjs/schedule';
 import { Model } from 'mongoose';
 import { dateTo15SecondsInterval, mergeArrays } from '../common/util';
-import { StoreTransactionDto } from '../transactions/dto/store-transaction.dto';
 import { IPrice } from '../users/interfaces/iprices.interface';
 import { UsersService } from '../users/users.service';
 import { StoreMeasureDto } from './dto/store-measure.dto';
@@ -37,12 +37,12 @@ export class MeasuresService {
     return this.measureModel.deleteMany();
   }
 
+  @Interval(1000)
   async match(policy: MatchingPolicy, measures?: Measure[], prices?: IPrice[]) {
-    const transactions = new Array<StoreTransactionDto>();
-    const { start, end } = dateTo15SecondsInterval(new Date());
+    const { start, end } = dateTo15SecondsInterval(new Date('12-22-2020 08:30:00'));
     measures = measures ?? (await this.findByDateInterval(start, end));
     prices = prices ?? (await this.usersService.findAllPrices());
     const orders = mergeArrays<Measure, IPrice>(measures, prices, 'userId', '_id');
-    return policy.match(orders);
+    console.log(policy.match(orders));
   }
 }

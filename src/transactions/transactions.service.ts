@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { Interval } from '@nestjs/schedule';
 import { Model } from 'mongoose';
 import { TimeInterval } from '../common/types';
 import { timeIntervalToDateIntervals } from '../common/util';

@@ -5,12 +5,14 @@ import { MeasuresService } from './measures.service';
 import { MeasuresGateway } from './measures.gateway';
 import { AuthModule } from '../auth/auth.module';
 import { UsersModule } from '../users/users.module';
+import { TransactionsModule } from '../transactions/transactions.module';
 
 @Module({
   imports: [
-    AuthModule,
     MongooseModule.forFeature([{ name: Measure.name, schema: MeasureSchema }]),
+    AuthModule,
     UsersModule,
+    TransactionsModule,
   ],
   providers: [MeasuresService, MeasuresGateway],
 })
