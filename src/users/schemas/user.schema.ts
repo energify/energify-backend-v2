@@ -3,8 +3,10 @@ import { Document } from 'mongoose';
 
 export type UserDocument = User & Document;
 
-@Schema()
+@Schema({ toObject: { virtuals: true, versionKey: false } })
 export class User {
+  id: string;
+
   @Prop({ required: true })
   name: string;
 
@@ -15,13 +17,16 @@ export class User {
   password: string;
 
   @Prop()
-  birthdate: Date;
+  birthdate?: Date;
 
   @Prop()
-  cc: string;
+  cc?: string;
 
   @Prop()
-  nif: string;
+  nif?: string;
+
+  @Prop({ required: true })
+  hederaAccountId: string;
 
   @Prop({ default: 1.2 })
   buyPrice: number;

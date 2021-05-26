@@ -1,4 +1,5 @@
 import { subHours } from 'date-fns';
+import { Document } from 'mongoose';
 import { DateInterval, TimeInterval } from './types';
 
 export function dateTo15SecondsInterval(date: Date) {
@@ -13,16 +14,16 @@ export function dateTo15SecondsInterval(date: Date) {
   return { start, end } as DateInterval;
 }
 
-export function mergeArrays<T extends object, K extends object>(
-  arr1: T[],
-  arr2: K[],
-  arr1Key: string,
-  arr2Key: string,
-) {
+export function mergeArrays<T, K>(arr1: T[], arr2: K[], arr1Key: string, arr2Key: string) {
   const arr2Keys = arr2.map((el) => JSON.stringify(el[arr2Key]));
-  console.log(arr2Keys);
   const intersection = arr1.filter((el) => arr2Keys.includes(JSON.stringify(el[arr1Key])));
-  return intersection.map((el, i) => ({ ...el, ...arr2[i] })) as (T & K)[];
+  return intersection.map((el, i) => {
+    const el2 = arr2[i];
+    return {
+      ...(el instanceof Document ? el.toObject() : el),
+      ...(el2 instanceof Document ? el2.toObject() : el2),
+    };
+  }) as (T & K)[];
 }
 
 export function timeIntervalToDateIntervals(end: Date, samples: number, interval: TimeInterval) {

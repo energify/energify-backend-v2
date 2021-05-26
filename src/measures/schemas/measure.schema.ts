@@ -3,9 +3,9 @@ import { Document, Types } from 'mongoose';
 
 export type MeasureDocument = Measure & Document;
 
-@Schema()
+@Schema({ toObject: { virtuals: true, versionKey: false } })
 export class Measure {
-  _id: Types.ObjectId;
+  id: string;
 
   @Prop({ required: true })
   value: number;

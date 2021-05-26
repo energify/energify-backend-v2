@@ -5,9 +5,8 @@ import { Measure, MeasureSchema } from './schemas/measure.schema';
 import { performance } from 'perf_hooks';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { StoreMeasureDto } from './dto/store-measure.dto';
-import { LpfLafPolicy } from './models/lpflaf-policy.model';
 import { UsersModule } from '../users/users.module';
-import { IPrice } from '../users/interfaces/iprices.interface';
+import { TransactionsModule } from '../transactions/transactions.module';
 
 jest.setTimeout(50000);
 
@@ -27,6 +26,7 @@ describe('MeasuresService', () => {
         }),
         MongooseModule.forFeature([{ name: Measure.name, schema: MeasureSchema }]),
         UsersModule,
+        TransactionsModule,
       ],
       providers: [MeasuresService],
     }).compile();
@@ -45,17 +45,23 @@ describe('MeasuresService', () => {
   });
 
   it('should store 2 measure', async () => {
-    const userId = Math.random() < 0.5 ? 'abc' : 'def';
-    let measure = await service.store(userId, { value: 1, measuredAt: new Date('12-22-2020') });
+    const userId = Math.random() < 0.5 ? '60ae6bfc4845b314803c8945' : '60ae6c0a084a66146a02a16c';
+    let measure = await service.store(userId, {
+      value: 1,
+      timestamp: new Date('12-22-2020').getTime() / 1000,
+    });
     expect(measure.value).toBe(1);
-    measure = await service.store(userId, { value: 2, measuredAt: new Date('12-22-2020') });
+    measure = await service.store(userId, {
+      value: 2,
+      timestamp: new Date('12-23-2020').getTime() / 1000,
+    });
     expect(measure.value).toBe(2);
   });
 
   it('should find 2 measures between 21-12-2020 and 24-12-2020', async () => {
     const measures = await service.findByDateInterval(
-      new Date('12-22-2020'),
-      new Date('12-22-2020'),
+      new Date('12-21-2020'),
+      new Date('12-24-2020'),
     );
 
     expect(measures).toHaveLength(2);
@@ -63,12 +69,12 @@ describe('MeasuresService', () => {
 
   it('should store 8000 measures under 1 second', async () => {
     const measures = new Array<StoreMeasureDto>();
-    const userId = Math.random() < 0.5 ? 'abc' : 'def';
+    const userId = Math.random() < 0.5 ? '60ae6bfc4845b314803c8945' : '60ae6c0a084a66146a02a16c';
 
     for (let i = 0; i < 8000; i++) {
       measures.push({
         value: Math.random() < 0.5 ? Math.random() * -10 : Math.random(),
-        measuredAt: new Date(),
+        timestamp: Date.now() / 1000,
       });
     }
 
@@ -86,29 +92,5 @@ describe('MeasuresService', () => {
       expect(t2 - t1).toBeLessThanOrEqual(4000);
       expect(measures).toHaveLength(8002);
     }
-  });
-
-  it.only('should make at least 8000 matches', async () => {
-    const measures: Measure[] = [
-      { measuredAt: new Date(), value: 4.3, userId: 'a' },
-      { measuredAt: new Date(), value: -4.3, userId: 'b' },
-      { measuredAt: new Date(), value: 1, userId: 'c' },
-      { measuredAt: new Date(), value: 2.3, userId: 'd' },
-      { measuredAt: new Date(), value: 3, userId: 'e' },
-      { measuredAt: new Date(), value: -5, userId: 'f' },
-      { measuredAt: new Date(), value: -2, userId: 'g' },
-    ];
-    const prices: IPrice[] = [
-      { buyPrice: 1.03, sellPrice: 1.04, _id: 'a' },
-      { buyPrice: 1.04, sellPrice: 1.02, _id: 'b' },
-      { buyPrice: 1.02, sellPrice: 1.01, _id: 'c' },
-      { buyPrice: 1.03, sellPrice: 1.04, _id: 'd' },
-      { buyPrice: 1.04, sellPrice: 1.05, _id: 'e' },
-      { buyPrice: 1.05, sellPrice: 1.01, _id: 'f' },
-      { buyPrice: 1.04, sellPrice: 1.0, _id: 'g' },
-    ];
-    const matches = await service.match(new LpfLafPolicy(), measures, prices);
-    console.log(matches);
-    expect(matches.length).toBeGreaterThanOrEqual(7);
   });
 });

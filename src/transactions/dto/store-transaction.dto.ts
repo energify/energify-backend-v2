@@ -14,7 +14,6 @@ export class StoreTransactionDto {
   @IsString()
   prosumerId: string;
 
-  @IsISO8601()
-  @Transform(({ value }) => new Date(value))
+  @IsDate()
   performedAt: Date;
 }

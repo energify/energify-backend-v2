@@ -8,6 +8,8 @@ import { AuthGuard } from './auth/guards/auth.guard';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TransactionsModule } from './transactions/transactions.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { PaymentsModule } from './payments/payments.module';
+import { HederaModule } from './hedera/hedera.module';
 
 @Module({
   imports: [
@@ -25,6 +27,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     UsersModule,
     AuthModule,
     TransactionsModule,
+    PaymentsModule,
+    HederaModule,
   ],
   controllers: [],
   providers: [{ provide: APP_GUARD, useClass: AuthGuard }],

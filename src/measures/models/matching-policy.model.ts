@@ -27,8 +27,8 @@ export abstract class MatchingPolicy {
           sell.value -= supplied;
           matches.push({
             value: supplied,
-            consumerId: buy.userId,
-            prosumerId: sell.userId,
+            consumerId: buy.userId.toHexString(),
+            prosumerId: sell.userId.toHexString(),
             matchedAt: buy.measuredAt,
             pricePerKw: sell.sellPrice,
           });
@@ -37,7 +37,7 @@ export abstract class MatchingPolicy {
         if (buy.value === 0) break;
         matches.push({
           value: buy.value * -1,
-          consumerId: buy.userId,
+          consumerId: buy.userId.toHexString(),
           prosumerId: undefined,
           matchedAt: buy.measuredAt,
           pricePerKw: 1.2,
@@ -49,7 +49,7 @@ export abstract class MatchingPolicy {
       matches.push({
         value: sell.value,
         consumerId: undefined,
-        prosumerId: sell.userId,
+        prosumerId: sell.userId.toHexString(),
         matchedAt: sell.measuredAt,
         pricePerKw: 1.2,
       });

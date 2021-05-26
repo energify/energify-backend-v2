@@ -15,15 +15,23 @@ export class UsersService {
   }
 
   async findAll() {
-    return this.userModel.find().exec();
+    return this.userModel.find();
   }
 
-  async findOneByEmail(email: string) {
+  async findById(id: string) {
+    return this.userModel.findById(id);
+  }
+
+  async findByEmail(email: string) {
     return this.userModel.findOne({ email });
   }
 
   async findPricesById(id: string) {
     return this.userModel.findOne({ id }, { buyPrice: 1, sellPrice: 1 });
+  }
+
+  async findHederaAccountIdById(id: string) {
+    return this.userModel.findOne({ id }, { hederaAccountId: 1 });
   }
 
   async findAllPrices() {

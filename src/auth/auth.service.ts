@@ -10,7 +10,7 @@ export class AuthService {
   constructor(private usersService: UsersService) {}
 
   async login(dto: LoginDto) {
-    const user = await this.usersService.findOneByEmail(dto.email);
+    const user = await this.usersService.findByEmail(dto.email);
 
     if (!user || !(await compare(dto.password, user.password))) {
       throw new BadRequestException('Provided credentials are not correct.');
@@ -20,7 +20,7 @@ export class AuthService {
   }
 
   async register(dto: RegisterDto) {
-    const user = await this.usersService.findOneByEmail(dto.email);
+    const user = await this.usersService.findByEmail(dto.email);
 
     if (user) {
       throw new BadRequestException('Email is already in use.');

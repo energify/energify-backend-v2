@@ -9,4 +9,7 @@ export class StoreUserDto {
 
   @IsString()
   password: string;
+
+  @IsString()
+  hederaAccountId: string;
 }

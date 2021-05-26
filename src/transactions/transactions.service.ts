@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Interval } from '@nestjs/schedule';
+import { subMinutes } from 'date-fns';
 import { Model } from 'mongoose';
 import { TimeInterval } from '../common/types';
 import { timeIntervalToDateIntervals } from '../common/util';
-import { AmountsDao } from './dao/amounts.dao';
-import { PriceHistoryDao } from './dao/prices-history.dao';
 import { StoreTransactionDto } from './dto/store-transaction.dto';
+import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { Transaction } from './schemas/transaction.schema';
 
 @Injectable()
@@ -21,11 +20,24 @@ export class TransactionsService {
     return this.transactionsModel.insertMany(dto);
   }
 
-  async findAll() {
-    return this.transactionsModel.find().exec();
+  async update(id: string, dto: UpdateTransactionDto) {
+    return this.transactionsModel.updateOne({ _id: id }, dto);
   }
 
-  async findPriceByDateInterval(start: Date, end: Date): Promise<number> {
+  async findAll() {
+    return this.transactionsModel.find();
+  }
+
+  async findReadyForPayment() {
+    return this.transactionsModel.find({
+      performedAt: { $lt: subMinutes(new Date(), 15) },
+      paymentId: { $exists: false },
+      prosumerId: { $exists: true },
+      consumerId: { $exists: true },
+    });
+  }
+
+  async findPriceByDateInterval(start: Date, end: Date) {
     const [{ pricePerKw }] = await this.transactionsModel.aggregate([
       { $match: { performedAt: { $gte: start, $lte: end } } },
       { $group: { _id: null, pricePerKw: { $avg: '$pricePerKw' } } },
@@ -33,7 +45,7 @@ export class TransactionsService {
     return pricePerKw ?? 0;
   }
 
-  async findPriceHistory(end: Date, interval: TimeInterval): Promise<PriceHistoryDao[]> {
+  async findPriceHistory(end: Date, interval: TimeInterval) {
     const dateIntervals = timeIntervalToDateIntervals(end, 10, interval);
     const pipeline = {};
 
@@ -47,7 +59,7 @@ export class TransactionsService {
     return this.transactionsModel.aggregate([{ $facet: pipeline }]);
   }
 
-  async findAmountsByUserId(userId: string, start: Date, end: Date): Promise<AmountsDao> {
+  async findAmountsByUserId(userId: string, start: Date, end: Date) {
     const [{ consumed, produced }] = await this.transactionsModel.aggregate([
       {
         $match: {
@@ -68,6 +80,6 @@ export class TransactionsService {
   }
 
   async deleteAll() {
-    return this.transactionsModel.deleteMany({}).exec();
+    return this.transactionsModel.deleteMany({});
   }
 }
