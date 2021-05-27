@@ -6,6 +6,7 @@ import { StoreTransactionDto } from './dto/store-transaction.dto';
 import { Transaction, TransactionSchema } from './schemas/transaction.schema';
 import { TransactionsService } from './transactions.service';
 import { subHours } from 'date-fns';
+import { Types } from 'mongoose';
 
 describe('TransactionsService', () => {
   let service: TransactionsService;
@@ -42,8 +43,8 @@ describe('TransactionsService', () => {
   it('should store 1 transaction', async () => {
     const transaction = await service.store({
       amount: 10,
-      consumerId: 'abc',
-      prosumerId: 'def',
+      consumerId: Types.ObjectId('60ae6bfc4845b314803c8945'),
+      prosumerId: Types.ObjectId('60ae6c0a084a66146a02a16c'),
       performedAt: new Date(),
       pricePerKw: 1.1,
     });
@@ -56,8 +57,12 @@ describe('TransactionsService', () => {
     for (let i = 0; i < 8000; i++) {
       transactions.push({
         amount: Math.random() < 0.5 ? Math.random() * -10 : Math.random() * 10,
-        consumerId: Math.random() < 0.5 ? 'abc' : 'def',
-        prosumerId: Math.random() < 0.5 ? 'abc' : 'def',
+        consumerId: Types.ObjectId(
+          Math.random() < 0.5 ? '60ae6bfc4845b314803c8945' : '60ae6c0a084a66146a02a16c',
+        ),
+        prosumerId: Types.ObjectId(
+          Math.random() < 0.5 ? '60ae6bfc4845b314803c8945' : '60ae6c0a084a66146a02a16c',
+        ),
         performedAt: new Date(Math.random() < 0.5 ? '12-22-2020' : '12-23-2020'),
         pricePerKw: 1.1,
       });
@@ -76,7 +81,7 @@ describe('TransactionsService', () => {
 
   it('should find amounts by user and date interval', async () => {
     const { consumed, produced } = await service.findAmountsByUserId(
-      'abc',
+      Types.ObjectId('60ae6bfc4845b314803c8945'),
       subHours(new Date('12-22-2020'), 12),
       new Date('12-22-2020'),
     );
@@ -87,6 +92,5 @@ describe('TransactionsService', () => {
 
   it('should find price history for time interval = 1d', async () => {
     const priceHistory = await service.findPriceHistory(new Date('12-24-2020'), '1d');
-    console.log(priceHistory);
   });
 });

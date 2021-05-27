@@ -7,6 +7,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { StoreMeasureDto } from './dto/store-measure.dto';
 import { UsersModule } from '../users/users.module';
 import { TransactionsModule } from '../transactions/transactions.module';
+import { Types } from 'mongoose';
 
 jest.setTimeout(50000);
 
@@ -46,12 +47,12 @@ describe('MeasuresService', () => {
 
   it('should store 2 measure', async () => {
     const userId = Math.random() < 0.5 ? '60ae6bfc4845b314803c8945' : '60ae6c0a084a66146a02a16c';
-    let measure = await service.store(userId, {
+    let measure = await service.store(Types.ObjectId(userId), {
       value: 1,
       timestamp: new Date('12-22-2020').getTime() / 1000,
     });
     expect(measure.value).toBe(1);
-    measure = await service.store(userId, {
+    measure = await service.store(Types.ObjectId(userId), {
       value: 2,
       timestamp: new Date('12-23-2020').getTime() / 1000,
     });
@@ -79,7 +80,7 @@ describe('MeasuresService', () => {
     }
 
     const t1 = performance.now();
-    service.storeBulk(userId, measures);
+    service.storeBulk(Types.ObjectId(userId), measures);
     const t2 = performance.now();
     expect(t2 - t1).toBeLessThanOrEqual(1000);
   });

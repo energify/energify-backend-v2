@@ -11,13 +11,10 @@ export class Transaction {
   @Prop({ required: true })
   pricePerKw: number;
 
-  @Prop()
-  paymentId?: string;
-
-  @Prop()
+  @Prop({ type: Types.ObjectId })
   consumerId?: Types.ObjectId;
 
-  @Prop()
+  @Prop({ type: Types.ObjectId })
   prosumerId?: Types.ObjectId;
 
   @Prop({ required: true })

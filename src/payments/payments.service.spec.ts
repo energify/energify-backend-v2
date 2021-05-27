@@ -1,6 +1,7 @@
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Types } from 'mongoose';
 import { PaymentStatus } from './enums/payment-status.enum';
 import { PaymentsService } from './payments.service';
 import { Payment, PaymentSchema } from './schemas/payment.schema';
@@ -40,9 +41,14 @@ describe('PaymentsService', () => {
   it('should store a payment with pending status (default)', async () => {
     const payment = await service.store({
       amount: 10,
-      consumerId: 'abc',
-      prosumerId: 'def',
+      consumerId: Types.ObjectId(
+        Math.random() < 0.5 ? '60ae6bfc4845b314803c8945' : '60ae6c0a084a66146a02a16c',
+      ),
+      prosumerId: Types.ObjectId(
+        Math.random() < 0.5 ? '60ae6bfc4845b314803c8945' : '60ae6c0a084a66146a02a16c',
+      ),
       issuedAt: new Date(),
+      transactionIds: [Types.ObjectId('60ae6bfc4845b314803c8945')],
     });
     expect(payment.status).toBe(PaymentStatus.Pending);
   });

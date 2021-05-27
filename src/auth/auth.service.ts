@@ -16,7 +16,7 @@ export class AuthService {
       throw new BadRequestException('Provided credentials are not correct.');
     }
 
-    return { accessToken: sign({ id: user.id, email: user.email, name: user.name }, 'test') };
+    return { accessToken: sign({ id: user._id, email: user.email, name: user.name }, 'test') };
   }
 
   async register(dto: RegisterDto) {

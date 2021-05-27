@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { StoreUserDto } from './dto/store-user.dto';
 import { UpdatePricesDto } from './dto/update-prices.dto';
 import { IPrice } from './interfaces/iprices.interface';
@@ -18,7 +18,7 @@ export class UsersService {
     return this.userModel.find();
   }
 
-  async findById(id: string) {
+  async findById(id: Types.ObjectId) {
     return this.userModel.findById(id);
   }
 
@@ -26,21 +26,21 @@ export class UsersService {
     return this.userModel.findOne({ email });
   }
 
-  async findPricesById(id: string) {
-    return this.userModel.findOne({ id }, { buyPrice: 1, sellPrice: 1 });
+  async findPricesById(id: Types.ObjectId) {
+    return this.userModel.findOne({ _id: id }, { buyPrice: 1, sellPrice: 1 });
   }
 
-  async findHederaAccountIdById(id: string) {
-    return this.userModel.findOne({ id }, { hederaAccountId: 1 });
+  async findHederaAccountIdById(id: Types.ObjectId) {
+    return this.userModel.findOne({ _id: id }, { hederaAccountId: 1 });
   }
 
   async findAllPrices() {
     return this.userModel.find({}, { buyPrice: 1, sellPrice: 1 });
   }
 
-  async updatePricesById(id: string, dto: UpdatePricesDto) {
+  async updatePricesById(id: Types.ObjectId, dto: UpdatePricesDto) {
     const { buyPrice, sellPrice } = dto;
-    return this.userModel.updateOne({ id }, { buyPrice, sellPrice });
+    return this.userModel.updateOne({ _id: id }, { buyPrice, sellPrice });
   }
 
   async deleteAll() {

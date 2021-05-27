@@ -20,20 +20,12 @@ export class MeasuresService {
     private transactionsService: TransactionsService,
   ) {}
 
-  async store(userId: string, dto: StoreMeasureDto) {
-    return this.measureModel.create({
-      ...dto,
-      userId: Types.ObjectId(userId),
-      measuredAt: fromUnixTime(dto.timestamp),
-    });
+  async store(userId: Types.ObjectId, dto: StoreMeasureDto) {
+    return this.measureModel.create({ ...dto, userId, measuredAt: fromUnixTime(dto.timestamp) });
   }
 
-  async storeBulk(userId: string, dto: StoreMeasureDto[]) {
-    const dtoWithUserId = dto.map((e) => ({
-      ...e,
-      userId: Types.ObjectId(userId),
-      measuredAt: fromUnixTime(e.timestamp),
-    }));
+  async storeBulk(userId: Types.ObjectId, dto: StoreMeasureDto[]) {
+    const dtoWithUserId = dto.map((e) => ({ ...e, userId, measuredAt: fromUnixTime(e.timestamp) }));
     return this.measureModel.insertMany(dtoWithUserId);
   }
 

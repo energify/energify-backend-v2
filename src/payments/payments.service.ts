@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Interval } from '@nestjs/schedule';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { HederaService } from '../hedera/hedera.service';
 import { TransactionsService } from '../transactions/transactions.service';
 import { UsersService } from '../users/users.service';
@@ -27,7 +27,7 @@ export class PaymentsService {
     return this.paymentsModel.insertMany(dto);
   }
 
-  async complete(id: string, dto: CompletePaymentDto, authedUserId?: string) {
+  async complete(id: Types.ObjectId, dto: CompletePaymentDto, authedUserId?: Types.ObjectId) {
     const payment = await this.findById(id);
 
     if (authedUserId && authedUserId !== payment.id) {
@@ -35,10 +35,10 @@ export class PaymentsService {
     }
 
     const { hederaAccountId: fromAccountId } = await this.usersService.findHederaAccountIdById(
-      payment.consumerId.toHexString(),
+      payment.consumerId,
     );
     const { hederaAccountId: toAccountId } = await this.usersService.findHederaAccountIdById(
-      payment.prosumerId.toHexString(),
+      payment.prosumerId,
     );
 
     if (
@@ -67,11 +67,11 @@ export class PaymentsService {
     return this.paymentsModel.deleteMany();
   }
 
-  async findById(id: string) {
+  async findById(id: Types.ObjectId) {
     return this.paymentsModel.findById(id);
   }
 
-  async findByUserId(userId: string) {
+  async findByUserId(userId: Types.ObjectId) {
     return this.paymentsModel.find({ $or: [{ consumerId: userId }, { prosumerId: userId }] });
   }
 

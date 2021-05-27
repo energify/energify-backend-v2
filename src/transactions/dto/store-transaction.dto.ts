@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsDate, IsISO8601, IsNumber, IsString, Min } from 'class-validator';
+import { Types } from 'mongoose';
 
 export class StoreTransactionDto {
   @IsNumber()
@@ -9,10 +10,12 @@ export class StoreTransactionDto {
   pricePerKw: number;
 
   @IsString()
-  consumerId: string;
+  @Transform(({ value }) => Types.ObjectId(value))
+  consumerId: Types.ObjectId;
 
   @IsString()
-  prosumerId: string;
+  @Transform(({ value }) => Types.ObjectId(value))
+  prosumerId: Types.ObjectId;
 
   @IsDate()
   performedAt: Date;

@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { subMinutes } from 'date-fns';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { TimeInterval } from '../common/types';
 import { timeIntervalToDateIntervals } from '../common/util';
 import { StoreTransactionDto } from './dto/store-transaction.dto';
-import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { Transaction } from './schemas/transaction.schema';
 
 @Injectable()
@@ -18,10 +17,6 @@ export class TransactionsService {
 
   async storeBulk(dto: StoreTransactionDto[]) {
     return this.transactionsModel.insertMany(dto);
-  }
-
-  async update(id: string, dto: UpdateTransactionDto) {
-    return this.transactionsModel.updateOne({ _id: id }, dto);
   }
 
   async findAll() {
@@ -51,7 +46,7 @@ export class TransactionsService {
 
     for (const { start, end } of dateIntervals) {
       pipeline[start.toString()] = [
-        { $match: { performedAt: { $gte: start, $lte: end } } },
+        { $match: { performedAt: { $gt: start, $lt: end } } },
         { $group: { _id: null, pricePerKw: { $avg: '$pricePerKw' } } },
       ];
     }
@@ -59,7 +54,7 @@ export class TransactionsService {
     return this.transactionsModel.aggregate([{ $facet: pipeline }]);
   }
 
-  async findAmountsByUserId(userId: string, start: Date, end: Date) {
+  async findAmountsByUserId(userId: Types.ObjectId, start: Date, end: Date) {
     const [{ consumed, produced }] = await this.transactionsModel.aggregate([
       {
         $match: {
