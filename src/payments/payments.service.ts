@@ -82,9 +82,7 @@ export class PaymentsService {
 
     for (const transaction of transactions) {
       const dto = paymentsDto.find(
-        (p) =>
-          p.consumerId === transaction.consumerId.toHexString() &&
-          p.prosumerId === transaction.prosumerId.toHexString(),
+        (p) => p.consumerId === transaction.consumerId && p.prosumerId === transaction.prosumerId,
       );
 
       if (dto) {
@@ -93,8 +91,8 @@ export class PaymentsService {
       } else {
         paymentsDto.push({
           amount: transaction.pricePerKw * transaction.amount,
-          consumerId: transaction.consumerId.toHexString(),
-          prosumerId: transaction.prosumerId.toHexString(),
+          consumerId: transaction.consumerId,
+          prosumerId: transaction.prosumerId,
           transactionIds: [transaction.id],
           issuedAt: new Date(),
         });
