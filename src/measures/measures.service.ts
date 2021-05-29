@@ -49,8 +49,8 @@ export class MeasuresService {
     return this.cache;
   }
 
-  deleteByIds(ids: string[]) {
-    this.cache = this.cache.filter((el) => !ids.includes(el.id));
+  deleteByDateInterval(start: Date, end: Date) {
+    this.cache = this.cache.filter((el) => !isWithinInterval(el.measuredAt, { start, end }));
   }
 
   findByDateInterval(start: Date, end: Date) {
@@ -65,7 +65,7 @@ export class MeasuresService {
     this.cache = [];
   }
 
-  @Interval(10)
+  @Interval(1)
   @NoOverlap()
   async match() {
     const measure = this.findOldest()[0];
@@ -87,7 +87,7 @@ export class MeasuresService {
     );
 
     const measures = this.findByDateInterval(start, end);
-    this.deleteByIds(measures.map((m) => m.id));
+    this.deleteByDateInterval(start, end);
 
     const orders = mergeArrays<Measure, IPrice>(measures, this.prices, 'userId', 'id');
     const matches = new LpfLafPolicy().match(orders);
