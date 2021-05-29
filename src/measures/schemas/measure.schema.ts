@@ -5,7 +5,7 @@ export type MeasureDocument = Measure & Document;
 
 @Schema({ toObject: { virtuals: true, versionKey: false } })
 export class Measure {
-  id: string;
+  id?: string;
 
   @Prop({ required: true })
   value: number;

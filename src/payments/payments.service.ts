@@ -75,7 +75,7 @@ export class PaymentsService {
     return this.paymentsModel.find({ $or: [{ consumerId: userId }, { prosumerId: userId }] });
   }
 
-  @Interval(1000)
+  @Interval(5000)
   async issue() {
     const transactions = await this.transactionsService.findReadyForPayment();
     const paymentsDto = new Array<StorePaymentDto>();

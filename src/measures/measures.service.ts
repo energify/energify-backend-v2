@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Interval } from '@nestjs/schedule';
-import { fromUnixTime } from 'date-fns';
+import { fromUnixTime, isWithinInterval } from 'date-fns';
 import { Model, Types } from 'mongoose';
+import { NoOverlap } from '../common/decorators/noverlap.decorator';
 import { dateTo15SecondsInterval, mergeArrays } from '../common/util';
 import { StoreTransactionDto } from '../transactions/dto/store-transaction.dto';
 import { TransactionsService } from '../transactions/transactions.service';
@@ -14,67 +15,92 @@ import { Measure } from './schemas/measure.schema';
 
 @Injectable()
 export class MeasuresService {
+  private cache = new Array<Measure>();
+  private isFirstMatch: boolean = true;
+  private prices?: IPrice[];
+  private transactionsDto = new Array<StoreTransactionDto>();
+
   constructor(
     @InjectModel(Measure.name) private measureModel: Model<Measure>,
     private usersService: UsersService,
     private transactionsService: TransactionsService,
   ) {}
 
-  async store(userId: Types.ObjectId, dto: StoreMeasureDto) {
-    return this.measureModel.create({ ...dto, userId, measuredAt: fromUnixTime(dto.timestamp) });
+  store(userId: Types.ObjectId, dto: StoreMeasureDto) {
+    this.cache.push({
+      ...dto,
+      id: new Types.ObjectId().toHexString(),
+      userId,
+      measuredAt: fromUnixTime(dto.timestamp),
+    });
   }
 
-  async storeBulk(userId: Types.ObjectId, dto: StoreMeasureDto[]) {
-    const dtoWithUserId = dto.map((e) => ({ ...e, userId, measuredAt: fromUnixTime(e.timestamp) }));
-    return this.measureModel.insertMany(dtoWithUserId);
+  storeBulk(userId: Types.ObjectId, dto: StoreMeasureDto[]) {
+    const dtosWithUserId = dto.map((e) => ({
+      ...e,
+      id: new Types.ObjectId().toHexString(),
+      userId,
+      measuredAt: fromUnixTime(e.timestamp),
+    }));
+    this.cache.push(...dtosWithUserId);
   }
 
-  async findAll() {
-    return this.measureModel.find();
+  findAll() {
+    return this.cache;
   }
 
-  async deleteByIds(ids: string[]) {
-    return this.measureModel.deleteMany({ _id: { $in: ids } });
+  deleteByIds(ids: string[]) {
+    this.cache = this.cache.filter((el) => !ids.includes(el.id));
   }
 
-  async findByDateInterval(start: Date, end: Date) {
-    return this.measureModel.find({ measuredAt: { $gte: start, $lte: end } });
+  findByDateInterval(start: Date, end: Date) {
+    return this.cache.filter((el) => isWithinInterval(el.measuredAt, { start, end }));
   }
 
-  async findOldest() {
-    return this.measureModel.find({}).sort({ measuredAt: 1 }).limit(1);
+  findOldest() {
+    return this.cache.sort((el1, el2) => el2.measuredAt.getTime() - el1.measuredAt.getTime());
   }
 
-  async deleteAll() {
-    return this.measureModel.deleteMany();
+  deleteAll() {
+    this.cache = [];
   }
 
-  @Interval(1000)
+  @Interval(1)
+  @NoOverlap()
   async match() {
-    const measure = (await this.findOldest())[0];
+    const measure = this.findOldest()[0];
+    if (!measure) return;
 
-    if (!measure) {
+    if (this.isFirstMatch) {
+      this.prices = await this.usersService.findAllPrices();
+      this.isFirstMatch = false;
       return;
     }
 
     const { start, end } = dateTo15SecondsInterval(new Date(measure.measuredAt));
-    const measures = await this.findByDateInterval(start, end);
-    const prices = await this.usersService.findAllPrices();
-    const orders = mergeArrays<Measure, IPrice>(measures, prices, 'userId', 'id');
+
+    Logger.log(`Matching measures from ${start} to ${end} (items cached: ${this.cache.length})`);
+
+    const measures = this.findByDateInterval(start, end);
+    this.deleteByIds(measures.map((m) => m.id));
+
+    const orders = mergeArrays<Measure, IPrice>(measures, this.prices, 'userId', 'id');
     const matches = new LpfLafPolicy().match(orders);
-    const transactionsDto = new Array<StoreTransactionDto>();
 
     for (const match of matches) {
-      transactionsDto.push({
+      this.transactionsDto.push({
         amount: match.value,
         consumerId: match.consumerId,
         prosumerId: match.prosumerId,
-        performedAt: new Date(),
+        performedAt: start,
         pricePerKw: match.pricePerKw,
       });
     }
 
-    await this.transactionsService.storeBulk(transactionsDto);
-    await this.deleteByIds(measures.map((m) => m.id));
+    if (this.transactionsDto.length > 5000) {
+      Logger.log(`${this.transactionsDto.length} transactions stored.`);
+      await this.transactionsService.storeBulk(this.transactionsDto);
+      this.transactionsDto = [];
+    }
   }
 }

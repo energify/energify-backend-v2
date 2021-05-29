@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Put } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { AuthedUser } from '../auth/decorators/authed-user.decorator';
 import { IUser } from '../auth/interfaces/iuser.interface';
-import { ParseObjectIdPipe } from '../common/parse-objectid.pipe';
+import { ParseObjectIdPipe } from '../common/pipes/parse-objectid.pipe';
 import { CompletePaymentDto } from './dto/complete-payment.dto';
 import { PaymentsService } from './payments.service';
 
