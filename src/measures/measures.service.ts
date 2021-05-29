@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Interval } from '@nestjs/schedule';
-import { fromUnixTime, isWithinInterval } from 'date-fns';
+import { format, fromUnixTime, isWithinInterval } from 'date-fns';
 import { Model, Types } from 'mongoose';
 import { NoOverlap } from '../common/decorators/noverlap.decorator';
 import { dateTo15SecondsInterval, mergeArrays } from '../common/util';
@@ -58,14 +58,14 @@ export class MeasuresService {
   }
 
   findOldest() {
-    return this.cache.sort((el1, el2) => el2.measuredAt.getTime() - el1.measuredAt.getTime());
+    return this.cache.sort((el1, el2) => el1.measuredAt.getTime() - el2.measuredAt.getTime());
   }
 
   deleteAll() {
     this.cache = [];
   }
 
-  @Interval(1)
+  @Interval(10)
   @NoOverlap()
   async match() {
     const measure = this.findOldest()[0];
@@ -79,7 +79,12 @@ export class MeasuresService {
 
     const { start, end } = dateTo15SecondsInterval(new Date(measure.measuredAt));
 
-    Logger.log(`Matching measures from ${start} to ${end} (items cached: ${this.cache.length})`);
+    Logger.log(
+      `Matching measures from ${format(start, 'dd/MM/yyyy HH:mm:ss')} to ${format(
+        end,
+        'dd/MM/yyyy HH:mm:ss',
+      )} (items cached: ${this.cache.length})`,
+    );
 
     const measures = this.findByDateInterval(start, end);
     this.deleteByIds(measures.map((m) => m.id));
