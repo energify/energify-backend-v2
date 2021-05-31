@@ -16,10 +16,10 @@ export class PaymentsController {
   @Public() //TODO
   async generatePdf(
     @Res() res: Response,
-    @Param('id', ParseObjectIdPipe) paymentId: Types.ObjectId,
+    @Param('id', ParseObjectIdPipe) id: Types.ObjectId,
     @AuthedUser() user: IUser,
   ) {
-    const stream = await this.paymentsService.generatePdfById(paymentId, user);
+    const stream = await this.paymentsService.generatePdfById(id, user);
     return stream.pipe(res);
   }
 

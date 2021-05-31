@@ -139,8 +139,13 @@ export class PaymentsService {
         to: consumer.name,
         number: payment._id,
         currency: 'EUR',
-        date: null,
-        items: [{ name: 'Energy Transfered', quantity, unit_cost: payment.amount }],
+        date: payment.issuedAt,
+        items: [
+          {
+            name: `${quantity} KW energy transferred`,
+            unit_cost: payment.amount,
+          },
+        ],
         fields: { tax: '%' },
         tax: 23,
       }),
