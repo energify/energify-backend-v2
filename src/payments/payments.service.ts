@@ -85,8 +85,11 @@ export class PaymentsService {
 
   @Interval(5000)
   async issue() {
-    const { performedAt: now } = await this.transactionsService.findOldestReadyForPayment();
-    const transactions = await this.transactionsService.findReadyForPayment(now);
+    const oldest = await this.transactionsService.findOldestReadyForPayment();
+
+    if (!oldest) return;
+
+    const transactions = await this.transactionsService.findReadyForPayment(oldest.performedAt);
     const paymentsDto = new Array<StorePaymentDto>();
 
     for (const transaction of transactions) {
