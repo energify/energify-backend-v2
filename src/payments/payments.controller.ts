@@ -12,11 +12,11 @@ import { PaymentsService } from './payments.service';
 export class PaymentsController {
   constructor(private paymentsService: PaymentsService) {}
 
-  @Get(':paymentId')
+  @Get(':id/invoice')
   @Public() //TODO
   async generatePdf(
     @Res() res: Response,
-    @Param('paymentId', ParseObjectIdPipe) paymentId: Types.ObjectId,
+    @Param('id', ParseObjectIdPipe) paymentId: Types.ObjectId,
     @AuthedUser() user: IUser,
   ) {
     const stream = await this.paymentsService.generatePdfById(paymentId, user);

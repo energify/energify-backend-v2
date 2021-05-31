@@ -17,6 +17,7 @@ import { StorePaymentDto } from './dto/store-payment.dto';
 import { PaymentStatus } from './enums/payment-status.enum';
 import { Payment } from './schemas/payment.schema';
 import fetch from 'node-fetch';
+import { addMinutes } from 'date-fns';
 
 @Injectable()
 export class PaymentsService {
@@ -83,13 +84,15 @@ export class PaymentsService {
     return this.paymentsModel.find({ $or: [{ consumerId: userId }, { prosumerId: userId }] });
   }
 
-  @Interval(5000)
+  @Interval(500)
   async issue() {
     const oldest = await this.transactionsService.findOldestReadyForPayment();
 
     if (!oldest) return;
 
-    const transactions = await this.transactionsService.findReadyForPayment(oldest.performedAt);
+    const transactions = await this.transactionsService.findReadyForPayment(
+      addMinutes(oldest.performedAt, 16),
+    );
     const paymentsDto = new Array<StorePaymentDto>();
 
     for (const transaction of transactions) {
@@ -121,10 +124,11 @@ export class PaymentsService {
     const payment = await this.findById(paymentId);
     const consumer = await this.usersService.findById(payment.consumerId);
     const prosumer = await this.usersService.findById(payment.prosumerId);
+    const quantity = await this.transactionsService.findAmountByIds(payment.transactionIds);
 
-    if (user.id != consumer.id && user.id != prosumer.id) {
+    /*if (user.id != consumer._id && user.id != prosumer._id) {
       throw new ForbiddenException('User do not have permission to visualize this invoice.');
-    }
+    }*/
 
     const t = await fetch('https://invoice-generator.com', {
       method: 'POST',
@@ -133,16 +137,10 @@ export class PaymentsService {
         logo: 'https://energify.pt/logo-small.png',
         from: prosumer.name,
         to: consumer.name,
-        number: payment.id,
+        number: payment._id,
         currency: 'EUR',
         date: null,
-        items: [
-          {
-            name: 'Energy Transfered',
-            quantity: 1, //TODO
-            unit_cost: payment.amount,
-          },
-        ],
+        items: [{ name: 'Energy Transfered', quantity, unit_cost: payment.amount }],
         fields: { tax: '%' },
         tax: 23,
       }),

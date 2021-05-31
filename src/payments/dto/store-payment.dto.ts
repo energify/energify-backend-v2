@@ -1,13 +1,13 @@
-import { IsArray, IsDate, IsNumber, IsPositive, IsString } from 'class-validator';
+import { IsArray, IsDate, IsNotEmpty, IsNumber, IsPositive } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { Types } from 'mongoose';
 
 export class StorePaymentDto {
-  @IsString()
+  @IsNotEmpty()
   @Transform(({ value }) => Types.ObjectId(value))
   consumerId: Types.ObjectId;
 
-  @IsString()
+  @IsNotEmpty()
   @Transform(({ value }) => Types.ObjectId(value))
   prosumerId: Types.ObjectId;
 

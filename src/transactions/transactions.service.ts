@@ -25,9 +25,8 @@ export class TransactionsService {
 
   async findReadyForPayment(now: Date) {
     return this.transactionsModel.find({
-      performedAt: { $lt: subMinutes(now, 15) },
+      performedAt: { $lte: subMinutes(now, 15) },
       isPaymentIssued: false,
-      paymentId: { $exists: false },
       prosumerId: { $exists: true },
       consumerId: { $exists: true },
     });
@@ -35,26 +34,28 @@ export class TransactionsService {
 
   async findOldestReadyForPayment() {
     return this.transactionsModel.findOne(
-      { isPaymentIssued: false },
+      { isPaymentIssued: false, prosumerId: { $exists: true }, consumerId: { $exists: true } },
       {},
       { sort: { performedAt: 1 } },
     );
   }
 
   async findAmountByIds(ids: Types.ObjectId[]) {
-    const [{ amount }] = await this.transactionsModel.aggregate([
+    const [result] = await this.transactionsModel.aggregate([
       { $match: { _id: { $in: ids } } },
       { $group: { _id: null, amount: { $sum: '$amount' } } },
     ]);
-    return amount ?? 0;
+
+    return result?.amount ?? 0;
   }
 
   async findPriceByDateInterval(start: Date, end: Date) {
-    const [{ pricePerKw }] = await this.transactionsModel.aggregate([
+    const [result] = await this.transactionsModel.aggregate([
       { $match: { performedAt: { $gte: start, $lte: end } } },
       { $group: { _id: null, pricePerKw: { $avg: '$pricePerKw' } } },
     ]);
-    return pricePerKw ?? 0;
+
+    return result?.pricePerKw ?? 0;
   }
 
   async findPriceHistory(end: Date, interval: TimeInterval) {
@@ -72,7 +73,7 @@ export class TransactionsService {
   }
 
   async findAmountsByUserId(userId: Types.ObjectId, start: Date, end: Date) {
-    const [{ consumed, produced }] = await this.transactionsModel.aggregate([
+    const [result] = await this.transactionsModel.aggregate([
       {
         $match: {
           performedAt: { $gte: start, $lte: end },
@@ -88,7 +89,7 @@ export class TransactionsService {
       },
     ]);
 
-    return { consumed: consumed ?? 0, produced: produced ?? 0 };
+    return { consumed: result?.consumed ?? 0, produced: result?.produced ?? 0 };
   }
 
   async deleteAll() {
