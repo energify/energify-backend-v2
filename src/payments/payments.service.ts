@@ -105,6 +105,9 @@ export class PaymentsService {
           issuedAt: new Date(),
         });
       }
+
+      transaction.isPaymentIssued = true;
+      transaction.save();
     }
 
     await this.storeBulk(paymentsDto);
