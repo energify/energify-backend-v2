@@ -11,7 +11,7 @@ export class Transaction {
   @Prop({ required: true })
   pricePerKw: number;
 
-  @Prop({ required: true })
+  @Prop({ required: true, default: false })
   isPaymentIssued: boolean;
 
   @Prop({ type: Types.ObjectId })
