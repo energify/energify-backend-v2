@@ -39,7 +39,7 @@ export class PaymentsService {
   async complete(id: Types.ObjectId, dto: CompletePaymentDto, authedUserId?: Types.ObjectId) {
     const payment = await this.findById(id);
 
-    if (authedUserId && authedUserId !== payment.id) {
+    if (authedUserId && authedUserId !== payment.consumerId) {
       throw new UnauthorizedException();
     }
 
@@ -102,13 +102,13 @@ export class PaymentsService {
 
       if (dto) {
         dto.amount += transaction.pricePerKw * transaction.amount;
-        dto.transactionIds.push(transaction.id);
+        dto.transactionIds.push(transaction._id);
       } else {
         paymentsDto.push({
           amount: transaction.pricePerKw * transaction.amount,
           consumerId: transaction.consumerId,
           prosumerId: transaction.prosumerId,
-          transactionIds: [transaction.id],
+          transactionIds: [transaction._id],
           issuedAt: new Date(),
         });
       }
