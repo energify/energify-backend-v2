@@ -32,6 +32,14 @@ export class TransactionsService {
     });
   }
 
+  async findAmountByIds(ids: Types.ObjectId[]) {
+    const [{ amount }] = await this.transactionsModel.aggregate([
+      { $match: { _id: { $in: ids } } },
+      { $group: { _id: null, amount: { $sum: '$amount' } } },
+    ]);
+    return amount ?? 0;
+  }
+
   async findPriceByDateInterval(start: Date, end: Date) {
     const [{ pricePerKw }] = await this.transactionsModel.aggregate([
       { $match: { performedAt: { $gte: start, $lte: end } } },

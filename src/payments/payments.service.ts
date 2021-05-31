@@ -1,7 +1,14 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Interval } from '@nestjs/schedule';
 import { Model, Types } from 'mongoose';
+import { Readable } from 'stream';
+import { IUser } from '../auth/interfaces/iuser.interface';
 import { HederaService } from '../hedera/hedera.service';
 import { TransactionsService } from '../transactions/transactions.service';
 import { UsersService } from '../users/users.service';
@@ -9,6 +16,7 @@ import { CompletePaymentDto } from './dto/complete-payment.dto';
 import { StorePaymentDto } from './dto/store-payment.dto';
 import { PaymentStatus } from './enums/payment-status.enum';
 import { Payment } from './schemas/payment.schema';
+import fetch from 'node-fetch';
 
 @Injectable()
 export class PaymentsService {
@@ -100,5 +108,41 @@ export class PaymentsService {
     }
 
     await this.storeBulk(paymentsDto);
+  }
+
+  async generatePdfById(paymentId: Types.ObjectId, user: IUser) {
+    const payment = await this.findById(paymentId);
+    const consumer = await this.usersService.findById(payment.consumerId);
+    const prosumer = await this.usersService.findById(payment.prosumerId);
+
+    if (user.id != consumer.id && user.id != prosumer.id) {
+      throw new ForbiddenException('User do not have permission to visualize this invoice.');
+    }
+
+    const t = await fetch('https://invoice-generator.com', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        logo: 'https://energify.pt/logo-small.png',
+        from: prosumer.name,
+        to: consumer.name,
+        number: payment.id,
+        currency: 'EUR',
+        date: null,
+        items: [
+          {
+            name: 'Energy Transfered',
+            quantity: 1, //TODO
+            unit_cost: payment.amount,
+          },
+        ],
+        fields: { tax: '%' },
+        tax: 23,
+      }),
+    });
+    const readable = new Readable();
+    readable.push(await t.buffer());
+    readable.push(null);
+    return readable;
   }
 }
