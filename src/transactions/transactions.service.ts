@@ -26,6 +26,7 @@ export class TransactionsService {
   async findReadyForPayment() {
     return this.transactionsModel.find({
       performedAt: { $lt: subMinutes(new Date(), 15) },
+      isPaymentIssued: false,
       paymentId: { $exists: false },
       prosumerId: { $exists: true },
       consumerId: { $exists: true },
