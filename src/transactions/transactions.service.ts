@@ -23,14 +23,22 @@ export class TransactionsService {
     return this.transactionsModel.find();
   }
 
-  async findReadyForPayment() {
+  async findReadyForPayment(now: Date) {
     return this.transactionsModel.find({
-      performedAt: { $lt: subMinutes(new Date(), 15) },
+      performedAt: { $lt: subMinutes(now, 15) },
       isPaymentIssued: false,
       paymentId: { $exists: false },
       prosumerId: { $exists: true },
       consumerId: { $exists: true },
     });
+  }
+
+  async findOldestReadyForPayment() {
+    return this.transactionsModel.findOne(
+      { isPaymentIssued: false },
+      {},
+      { sort: { performedAt: 1 } },
+    );
   }
 
   async findAmountByIds(ids: Types.ObjectId[]) {
