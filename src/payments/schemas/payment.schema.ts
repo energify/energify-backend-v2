@@ -23,7 +23,7 @@ export class Payment {
   @Prop({ required: true, default: PaymentStatus.Pending })
   status: PaymentStatus;
 
-  @Prop({ required: true })
+  @Prop({ required: true, index: true })
   issuedAt: Date;
 
   @Prop({ required: true })

@@ -11,16 +11,16 @@ export class Transaction {
   @Prop({ required: true })
   pricePerKw: number;
 
-  @Prop({ required: true, default: false })
+  @Prop({ required: true, default: false, index: true })
   isPaymentIssued: boolean;
 
-  @Prop({ type: Types.ObjectId })
+  @Prop({ type: Types.ObjectId, index: true })
   consumerId?: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId })
+  @Prop({ type: Types.ObjectId, index: true })
   prosumerId?: Types.ObjectId;
 
-  @Prop({ required: true })
+  @Prop({ required: true, index: true })
   performedAt: Date;
 }
 
