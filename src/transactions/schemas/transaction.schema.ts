@@ -14,10 +14,10 @@ export class Transaction {
   @Prop({ required: true, default: false, index: true })
   isPaymentIssued: boolean;
 
-  @Prop({ type: Types.ObjectId, index: true })
+  @Prop({ type: Types.ObjectId, index: true, default: null })
   consumerId?: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, index: true })
+  @Prop({ type: Types.ObjectId, index: true, default: null })
   prosumerId?: Types.ObjectId;
 
   @Prop({ required: true, index: true })

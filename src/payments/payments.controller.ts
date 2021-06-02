@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Put, Res } from '@nestjs/common';
+import { Body, Controller, Get, Param, Put, Res, Query, ParseIntPipe } from '@nestjs/common';
 import { Response } from 'express';
 import { Types } from 'mongoose';
 import { AuthedUser } from '../auth/decorators/authed-user.decorator';
@@ -23,9 +23,16 @@ export class PaymentsController {
     return stream.pipe(res);
   }
 
-  @Get('me')
-  async findByAuthedUser(@AuthedUser() user: IUser) {
-    return this.paymentsService.findByUserId(user.id);
+  @Get()
+  async findByAuthedUser(
+    @AuthedUser() user: IUser,
+    @Query('page') page: number = 1,
+    @Query('type') type: string = 'all',
+    @Query('min-price') minPrice: number = 0,
+    @Query('max-price') maxPrice: number = Number.MAX_SAFE_INTEGER,
+    @Query('date') date?: Date,
+  ) {
+    return this.paymentsService.findByUserId(user.id, page, type, minPrice, maxPrice, date);
   }
 
   @Put(':id')

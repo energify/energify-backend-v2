@@ -27,14 +27,14 @@ export class TransactionsService {
     return this.transactionsModel.find({
       performedAt: { $lte: subMinutes(now, 15) },
       isPaymentIssued: false,
-      prosumerId: { $exists: true },
-      consumerId: { $exists: true },
+      prosumerId: { $ne: null },
+      consumerId: { $ne: null },
     });
   }
 
   async findOldestReadyForPayment() {
     return this.transactionsModel.findOne(
-      { isPaymentIssued: false, prosumerId: { $exists: true }, consumerId: { $exists: true } },
+      { isPaymentIssued: false, prosumerId: { $ne: null }, consumerId: { $ne: null } },
       {},
       { sort: { performedAt: 1 } },
     );
@@ -59,17 +59,22 @@ export class TransactionsService {
   }
 
   async findPriceHistory(end: Date, interval: TimeInterval) {
-    const dateIntervals = timeIntervalToDateIntervals(end, 10, interval);
+    const dateIntervals = timeIntervalToDateIntervals(end, 12, interval);
     const pipeline = {};
+    let i = 0;
 
     for (const { start, end } of dateIntervals) {
-      pipeline[start.toString()] = [
+      pipeline[i] = [
         { $match: { performedAt: { $gt: start, $lt: end } } },
         { $group: { _id: null, pricePerKw: { $avg: '$pricePerKw' } } },
       ];
+      i++;
     }
 
-    return this.transactionsModel.aggregate([{ $facet: pipeline }]);
+    const [results] = await this.transactionsModel.aggregate([{ $facet: pipeline }]);
+    return Object.values(results)
+      .map((el) => el[0]?.pricePerKw ?? 0)
+      .reverse();
   }
 
   async findAmountsByUserId(userId: Types.ObjectId, start: Date, end: Date) {
@@ -90,6 +95,90 @@ export class TransactionsService {
     ]);
 
     return { consumed: result?.consumed ?? 0, produced: result?.produced ?? 0 };
+  }
+
+  async findAmountsHistoryByUserId(userId: Types.ObjectId, end: Date, interval: TimeInterval) {
+    const dateIntervals = timeIntervalToDateIntervals(end, 12, interval);
+    const pipeline = {};
+    let i = 0;
+
+    for (const { start, end } of dateIntervals) {
+      pipeline[i] = [
+        {
+          $match: {
+            performedAt: { $gte: start, $lte: end },
+            $or: [{ consumerId: userId }, { prosumerId: userId }],
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            consumed: { $sum: { $cond: [{ $eq: ['$consumerId', userId] }, '$amount', 0] } },
+            produced: { $sum: { $cond: [{ $eq: ['$prosumerId', userId] }, '$amount', 0] } },
+          },
+        },
+      ];
+      i++;
+    }
+
+    const [results] = await this.transactionsModel.aggregate([{ $facet: pipeline }]);
+    return Object.values(results)
+      .map((el) => ({ produced: el[0]?.produced ?? 0, consumed: el[0]?.consumed ?? 0 }))
+      .reverse();
+  }
+
+  async findAmountsFlowByUserId(userId: Types.ObjectId, start: Date, end: Date) {
+    const [results] = await this.transactionsModel.aggregate([
+      {
+        $match: {
+          performedAt: { $gte: start, $lte: end },
+          $or: [{ consumerId: userId }, { prosumerId: userId }],
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          fromCommunity: {
+            $sum: {
+              $cond: [
+                { $and: [{ $eq: ['$consumerId', userId] }, { $ne: ['$prosumerId', null] }] },
+                '$amount',
+                0,
+              ],
+            },
+          },
+          toCommunity: {
+            $sum: {
+              $cond: [
+                { $and: [{ $eq: ['$prosumerId', userId] }, { $ne: ['$consumerId', null] }] },
+                '$amount',
+                0,
+              ],
+            },
+          },
+          toPublicGrid: {
+            $sum: {
+              $cond: [
+                { $and: [{ $eq: ['$prosumerId', userId] }, { $eq: ['$consumerId', null] }] },
+                '$amount',
+                0,
+              ],
+            },
+          },
+          fromPublicGrid: {
+            $sum: {
+              $cond: [
+                { $and: [{ $eq: ['$consumerId', userId] }, { $eq: ['$prosumerId', null] }] },
+                '$amount',
+                0,
+              ],
+            },
+          },
+        },
+      },
+    ]);
+
+    return results;
   }
 
   async deleteAll() {

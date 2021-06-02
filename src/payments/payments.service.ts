@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Interval } from '@nestjs/schedule';
-import { Model, Types } from 'mongoose';
+import { FilterQuery, Model, Types } from 'mongoose';
 import { Readable } from 'stream';
 import { IUser } from '../auth/interfaces/iuser.interface';
 import { HederaService } from '../hedera/hedera.service';
@@ -17,7 +17,7 @@ import { StorePaymentDto } from './dto/store-payment.dto';
 import { PaymentStatus } from './enums/payment-status.enum';
 import { Payment } from './schemas/payment.schema';
 import fetch from 'node-fetch';
-import { addMinutes } from 'date-fns';
+import { addDays, addMinutes, isValid } from 'date-fns';
 
 @Injectable()
 export class PaymentsService {
@@ -80,8 +80,29 @@ export class PaymentsService {
     return this.paymentsModel.findById(id);
   }
 
-  async findByUserId(userId: Types.ObjectId) {
-    return this.paymentsModel.find({ $or: [{ consumerId: userId }, { prosumerId: userId }] });
+  async findByUserId(
+    userId: Types.ObjectId,
+    page: number = 1,
+    type?: string,
+    minPrice: number = 0,
+    maxPrice: number = Number.MAX_SAFE_INTEGER,
+    date?: Date,
+  ) {
+    const conditions: FilterQuery<Payment> = {
+      $or: [{ consumerId: userId }, { prosumerId: userId }],
+      amount: { $gte: minPrice, $lte: maxPrice },
+      issuedAt: {
+        $gte: isValid(date) ? date : new Date('01-01-1970'),
+        $lte: isValid(date) ? addDays(date, 1) : new Date('01-01-2037'),
+      },
+    };
+    return {
+      data: await this.paymentsModel
+        .find(conditions)
+        .skip(10 * (page - 1))
+        .limit(10),
+      count: await this.paymentsModel.find(conditions).countDocuments(),
+    };
   }
 
   @Interval(500)

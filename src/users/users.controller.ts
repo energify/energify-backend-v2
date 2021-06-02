@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Put } from '@nestjs/common';
+import { Body, Controller, Get, Put, UnauthorizedException } from '@nestjs/common';
 import { AuthedUser } from '../auth/decorators/authed-user.decorator';
 import { IUser } from '../auth/interfaces/iuser.interface';
 import { UpdatePricesDto } from './dto/update-prices.dto';
@@ -10,7 +10,9 @@ export class UsersController {
 
   @Get('me')
   async findAuthed(@AuthedUser() user: IUser) {
-    return this.usersService.findById(user.id);
+    const _user = await this.usersService.findById(user.id);
+    if (!_user) throw new UnauthorizedException('Invalid credentials');
+    return _user;
   }
 
   @Put('prices')
