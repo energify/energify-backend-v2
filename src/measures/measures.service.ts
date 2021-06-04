@@ -52,12 +52,7 @@ export class MeasuresService {
       return;
     }
 
-    if (
-      date.getDay() === 1 &&
-      date.getHours() === 0 &&
-      date.getMinutes() === 0 &&
-      date.getSeconds() === 0
-    ) {
+    if (date.getDay() === 1 && date.getHours() === 0) {
       Logger.log(
         `Matching measures from ${format(date, 'dd/MM/yyyy HH:mm:ss')} (items cached: ${
           this.cache.size
@@ -81,7 +76,7 @@ export class MeasuresService {
       });
     }
 
-    if (this.transactionsDto.length > 2500) {
+    if (this.transactionsDto.length > 5000) {
       Logger.log(`${this.transactionsDto.length} transactions stored.`);
       await this.transactionsService.storeBulk(this.transactionsDto);
       this.transactionsDto = [];
