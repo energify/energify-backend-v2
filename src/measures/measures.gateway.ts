@@ -28,9 +28,4 @@ export class MeasuresGateway implements OnGatewayConnection {
   store(@WsAuthedUser() user: IUser, @MessageBody() dto: StoreMeasureDto) {
     return this.measuresService.store(user.id, dto);
   }
-
-  @SubscribeMessage('store-bulk')
-  storeBulk(@WsAuthedUser() user: IUser, @MessageBody() dto: StoreMeasureDto[]) {
-    return this.measuresService.storeBulk(user.id, dto);
-  }
 }

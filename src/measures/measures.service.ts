@@ -15,7 +15,7 @@ import { Measure } from './schemas/measure.schema';
 
 @Injectable()
 export class MeasuresService {
-  private cache = new Array<Measure>();
+  private cache = new Map<number, Measure[]>();
   private isFirstMatch: boolean = true;
   private prices?: IPrice[];
   private transactionsDto = new Array<StoreTransactionDto>();
@@ -27,7 +27,11 @@ export class MeasuresService {
   ) {}
 
   store(userId: Types.ObjectId, dto: StoreMeasureDto) {
-    this.cache.push({
+    if (!this.cache.has(dto.timestamp)) {
+      this.cache.set(dto.timestamp, []);
+    }
+
+    this.cache.get(dto.timestamp).push({
       ...dto,
       id: new Types.ObjectId().toHexString(),
       userId,
@@ -35,41 +39,15 @@ export class MeasuresService {
     });
   }
 
-  storeBulk(userId: Types.ObjectId, dto: StoreMeasureDto[]) {
-    const dtosWithUserId = dto.map((e) => ({
-      ...e,
-      id: new Types.ObjectId().toHexString(),
-      userId,
-      measuredAt: fromUnixTime(e.timestamp),
-    }));
-    this.cache.push(...dtosWithUserId);
-  }
-
-  findAll() {
-    return this.cache;
-  }
-
-  deleteByDateInterval(start: Date, end: Date) {
-    this.cache = this.cache.filter((el) => !isWithinInterval(el.measuredAt, { start, end }));
-  }
-
-  findByDateInterval(start: Date, end: Date) {
-    return this.cache.filter((el) => isWithinInterval(el.measuredAt, { start, end }));
-  }
-
-  findOldest() {
-    return this.cache.sort((el1, el2) => el1.measuredAt.getTime() - el2.measuredAt.getTime());
-  }
-
-  deleteAll() {
-    this.cache = [];
+  findOldestKey() {
+    return Array.from(this.cache.keys()).sort((key1, key2) => key1 - key2);
   }
 
   @Interval(1)
   @NoOverlap()
   async match() {
-    const measure = this.findOldest()[0];
-    if (!measure) return;
+    const timestamp = this.findOldestKey()[0];
+    if (!timestamp) return;
 
     if (this.isFirstMatch) {
       this.prices = await this.usersService.findAllPrices();
@@ -77,17 +55,15 @@ export class MeasuresService {
       return;
     }
 
-    const { start, end } = dateTo15SecondsInterval(new Date(measure.measuredAt));
-
     Logger.log(
-      `Matching measures from ${format(start, 'dd/MM/yyyy HH:mm:ss')} to ${format(
-        end,
+      `Matching measures from ${format(
+        fromUnixTime(timestamp),
         'dd/MM/yyyy HH:mm:ss',
-      )} (items cached: ${this.cache.length})`,
+      )} (items cached: ${this.cache.size})`,
     );
 
-    const measures = this.findByDateInterval(start, end);
-    this.deleteByDateInterval(start, end);
+    const measures = this.cache.get(timestamp);
+    this.cache.delete(timestamp);
 
     const orders = mergeArrays<Measure, IPrice>(measures, this.prices, 'userId', 'id');
     const matches = new LpfLafPolicy().match(orders);
@@ -97,7 +73,7 @@ export class MeasuresService {
         amount: match.value,
         consumerId: match.consumerId,
         prosumerId: match.prosumerId,
-        performedAt: start,
+        performedAt: fromUnixTime(timestamp),
         pricePerKw: match.pricePerKw,
       });
     }
