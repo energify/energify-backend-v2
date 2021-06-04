@@ -42,7 +42,7 @@ export class MeasuresService {
   @Interval(1)
   @NoOverlap()
   async match() {
-    const timestamp = this.cache.keys()[0];
+    const timestamp = Array.from(this.cache.keys())[0];
     if (!timestamp) return;
 
     if (this.isFirstMatch) {
