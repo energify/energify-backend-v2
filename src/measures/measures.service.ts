@@ -39,14 +39,10 @@ export class MeasuresService {
     });
   }
 
-  findOldestKey() {
-    return Array.from(this.cache.keys()).sort((key1, key2) => key1 - key2);
-  }
-
   @Interval(1)
   @NoOverlap()
   async match() {
-    const timestamp = this.findOldestKey()[0];
+    const timestamp = this.cache.keys()[0];
     if (!timestamp) return;
 
     if (this.isFirstMatch) {
