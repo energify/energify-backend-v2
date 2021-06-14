@@ -9,7 +9,7 @@ export class Payment {
   id: string;
 
   @Prop()
-  hederaTransactionId: string;
+  hederaTransactionHash: string;
 
   @Prop({ required: true })
   consumerId: Types.ObjectId;

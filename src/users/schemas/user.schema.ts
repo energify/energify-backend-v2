@@ -28,10 +28,10 @@ export class User {
   @Prop({ required: true })
   hederaAccountId: string;
 
-  @Prop({ default: 1.2 })
+  @Prop({ default: 0.2 })
   buyPrice: number;
 
-  @Prop({ default: 1.2 })
+  @Prop({ default: 0.2 })
   sellPrice: number;
 }
 

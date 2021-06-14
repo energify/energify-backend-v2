@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Interval } from '@nestjs/schedule';
 import { FilterQuery, Model, Types } from 'mongoose';
@@ -39,7 +34,7 @@ export class PaymentsService {
   async complete(id: Types.ObjectId, dto: CompletePaymentDto, authedUserId?: Types.ObjectId) {
     const payment = await this.findById(id);
 
-    if (authedUserId && authedUserId !== payment.consumerId) {
+    if (authedUserId && !authedUserId.equals(payment.consumerId)) {
       throw new UnauthorizedException();
     }
 
@@ -54,13 +49,13 @@ export class PaymentsService {
       await this.hederaService.didTransferOccur(
         fromAccountId,
         toAccountId,
-        payment.amount,
-        dto.hederaTransactionId,
+        payment.amount * 0.2,
+        dto.hederaTransactionHash,
         payment.issuedAt,
       )
     ) {
       payment.status = PaymentStatus.Completed;
-      payment.hederaTransactionId = dto.hederaTransactionId;
+      payment.hederaTransactionHash = dto.hederaTransactionHash;
       payment.paidAt = new Date();
       return payment.save();
     }

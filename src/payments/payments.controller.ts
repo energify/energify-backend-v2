@@ -24,7 +24,7 @@ export class PaymentsController {
   }
 
   @Get()
-  async findByAuthedUser(
+  async findByUserId(
     @AuthedUser() user: IUser,
     @Query('page') page: number = 1,
     @Query('type') type: string = 'all',
@@ -35,7 +35,7 @@ export class PaymentsController {
     return this.paymentsService.findByUserId(user.id, page, type, minPrice, maxPrice, date);
   }
 
-  @Put(':id')
+  @Put(':id/complete')
   async complete(
     @Param('id', ParseObjectIdPipe) id: Types.ObjectId,
     @Body() dto: CompletePaymentDto,

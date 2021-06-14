@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Interval } from '@nestjs/schedule';
-import { format, fromUnixTime, isWithinInterval } from 'date-fns';
+import { format, fromUnixTime, isAfter, isWithinInterval } from 'date-fns';
 import { Model, Types } from 'mongoose';
 import { NoOverlap } from '../common/decorators/noverlap.decorator';
 import { dateTo15SecondsInterval, mergeArrays } from '../common/util';
@@ -52,13 +52,11 @@ export class MeasuresService {
       return;
     }
 
-    if (date.getDay() === 1 && date.getHours() === 0) {
-      Logger.log(
-        `Matching measures from ${format(date, 'dd/MM/yyyy HH:mm:ss')} (items cached: ${
-          this.cache.size
-        })`,
-      );
-    }
+    Logger.log(
+      `Matching measures from ${format(date, 'dd/MM/yyyy HH:mm:ss')} (items cached: ${
+        this.cache.size
+      })`,
+    );
 
     const measures = this.cache.get(timestamp);
     this.cache.delete(timestamp);
@@ -76,7 +74,8 @@ export class MeasuresService {
       });
     }
 
-    if (this.transactionsDto.length > 5000) {
+    //TODO: Remove isAfter hardcoded last save
+    if (this.transactionsDto.length > 5000 || isAfter(date, new Date('01-01-2021'))) {
       Logger.log(`${this.transactionsDto.length} transactions stored.`);
       await this.transactionsService.storeBulk(this.transactionsDto);
       this.transactionsDto = [];

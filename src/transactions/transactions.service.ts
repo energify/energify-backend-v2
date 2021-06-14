@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { subMinutes } from 'date-fns';
+import { lastDayOfMonth, parse, subMinutes } from 'date-fns';
 import { Model, Types } from 'mongoose';
 import { TimeInterval } from '../common/types';
 import { timeIntervalToDateIntervals } from '../common/util';
@@ -178,7 +178,67 @@ export class TransactionsService {
       },
     ]);
 
-    return results;
+    return {
+      fromPublicGrid: results?.fromPublicGrid ?? 0,
+      fromCommunity: results?.fromCommunity ?? 0,
+      toCommunity: results?.toCommunity ?? 0,
+      toPublicGrid: results?.toPublicGrid ?? 0,
+    };
+  }
+
+  async findMonthlyResumeByUserId(userId: Types.ObjectId, month: number, year: number) {
+    const start = parse(`0${month}-01-${year}`, 'MM-dd-yyyy', new Date());
+    const end = lastDayOfMonth(start);
+
+    const [result] = await this.transactionsModel.aggregate([
+      {
+        $match: {
+          performedAt: { $gte: start, $lte: end },
+          $or: [{ consumerId: userId }, { prosumerId: userId }],
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          consumed: { $sum: { $cond: [{ $eq: ['$consumerId', userId] }, '$amount', 0] } },
+          produced: { $sum: { $cond: [{ $eq: ['$prosumerId', userId] }, '$amount', 0] } },
+          moneyToCommunity: {
+            $sum: {
+              $cond: [
+                { $and: [{ $eq: ['$consumerId', userId] }, { $ne: ['$prosumerId', null] }] },
+                { $multiply: ['$amount', '$pricePerKw'] },
+                0,
+              ],
+            },
+          },
+          moneyFromCommunity: {
+            $sum: {
+              $cond: [
+                { $eq: ['$prosumerId', userId] },
+                { $multiply: ['$amount', '$pricePerKw'] },
+                0,
+              ],
+            },
+          },
+        },
+      },
+    ]);
+    const { fromCommunity, toPublicGrid, fromPublicGrid } = await this.findAmountsFlowByUserId(
+      userId,
+      start,
+      end,
+    );
+    const usedEnergy = Math.abs((result?.produced ?? 0) - (result?.consumed ?? 0));
+
+    return {
+      usedEnergy,
+      emmitedCo2: usedEnergy * 0.475,
+      savedMoney:
+        fromCommunity * 0.21 +
+        (result?.moneyFromCommunity ?? 0) +
+        (result?.moneyToCommunity ?? 0) +
+        Math.max(toPublicGrid * 0.21 - fromPublicGrid * 0.21, 0),
+    };
   }
 
   async deleteAll() {

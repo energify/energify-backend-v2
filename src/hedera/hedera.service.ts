@@ -8,33 +8,33 @@ import { IHedaraTransaction } from './interfaces/ihedera-transaction.interface';
 export class HederaService {
   constructor(private configService: ConfigService) {}
 
-  async fetchAccountTransfers(accountId: string) {
+  async fetchTransactionByHash(hash: string): Promise<IHedaraTransaction> {
     const baseUrl = this.configService.get<string>('HEDERA_MIRROR_URL');
-    const data = await fetch(
-      `${baseUrl}/api/v1/transactions?account.id=${accountId}&transactionType=CRYPTOTRANSFER`,
-    );
-    const { transactions } = await data.json();
-    return transactions as IHedaraTransaction[];
+    const response = await fetch(`${baseUrl}/transaction/${hash}`);
+    return response.json();
   }
 
   async didTransferOccur(
     fromId: string,
     toId: string,
     amount: number,
-    transactionId: string,
+    hash: string,
     paymentIssueDate: Date,
   ) {
-    const transfers = await this.fetchAccountTransfers(fromId);
-    const transfer = transfers.find((t) => t.transaction_id === transactionId);
-    const to = transfer?.transfers.find((t) => t.account === toId);
+    try {
+      const transaction = await this.fetchTransactionByHash(hash);
+      const isCorrectSender = !!transaction.transfers.find((t) => t.account === fromId);
+      const isCorrectReceiver = !!transaction.transfers.find(
+        (t) => t.account === toId && t.amount === amount * 100000000,
+      );
 
-    if (!transfer || !to || transfer.result !== 'SUCCESS') {
+      return (
+        isCorrectSender &&
+        isCorrectReceiver &&
+        isAfter(new Date(transaction.validStartAt), paymentIssueDate)
+      );
+    } catch (e) {
       return false;
     }
-
-    return (
-      to.amount === amount &&
-      isAfter(fromUnixTime(parseFloat(transfer.consensus_timestamp)), paymentIssueDate)
-    );
   }
 }

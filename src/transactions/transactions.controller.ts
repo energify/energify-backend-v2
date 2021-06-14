@@ -30,4 +30,13 @@ export class TransactionsController {
   async findPriceHistory(@Query('end') end: Date, @Query('interval') interval: TimeInterval) {
     return this.transactionsService.findPriceHistory(end, interval);
   }
+
+  @Get('resume/monthly')
+  async findMonthlyResume(
+    @AuthedUser() user: IUser,
+    @Query('month') month: number,
+    @Query('year') year: number,
+  ) {
+    return this.transactionsService.findMonthlyResumeByUserId(user.id, month, year);
+  }
 }

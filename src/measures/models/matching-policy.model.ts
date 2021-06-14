@@ -40,7 +40,7 @@ export abstract class MatchingPolicy {
           consumerId: buy.userId,
           prosumerId: undefined,
           matchedAt: buy.measuredAt,
-          pricePerKw: 1.2,
+          pricePerKw: 0.21,
         });
       }
     }
@@ -51,7 +51,7 @@ export abstract class MatchingPolicy {
         consumerId: undefined,
         prosumerId: sell.userId,
         matchedAt: sell.measuredAt,
-        pricePerKw: 1.2,
+        pricePerKw: 0.21,
       });
     }
 
