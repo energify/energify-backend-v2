@@ -60,18 +60,17 @@ export class TransactionsService {
 
   async findPriceHistory(end: Date, interval: TimeInterval) {
     const dateIntervals = timeIntervalToDateIntervals(end, 12, interval);
-    const pipeline = {};
-    let i = 0;
+    const results = [];
 
     for (const { start, end } of dateIntervals) {
-      pipeline[i] = [
-        { $match: { performedAt: { $gt: start, $lt: end } } },
-        { $group: { _id: null, pricePerKw: { $avg: '$pricePerKw' } } },
-      ];
-      i++;
+      results.push(
+        await this.transactionsModel.aggregate([
+          { $match: { performedAt: { $gt: start, $lt: end } } },
+          { $group: { _id: null, pricePerKw: { $avg: '$pricePerKw' } } },
+        ]),
+      );
     }
 
-    const [results] = await this.transactionsModel.aggregate([{ $facet: pipeline }]);
     return Object.values(results)
       .map((el) => el[0]?.pricePerKw ?? 0)
       .reverse();
@@ -99,29 +98,28 @@ export class TransactionsService {
 
   async findAmountsHistoryByUserId(userId: Types.ObjectId, end: Date, interval: TimeInterval) {
     const dateIntervals = timeIntervalToDateIntervals(end, 12, interval);
-    const pipeline = {};
-    let i = 0;
+    const results = [];
 
     for (const { start, end } of dateIntervals) {
-      pipeline[i] = [
-        {
-          $match: {
-            performedAt: { $gte: start, $lte: end },
-            $or: [{ consumerId: userId }, { prosumerId: userId }],
+      results.push(
+        await this.transactionsModel.aggregate([
+          {
+            $match: {
+              performedAt: { $gte: start, $lte: end },
+              $or: [{ consumerId: userId }, { prosumerId: userId }],
+            },
           },
-        },
-        {
-          $group: {
-            _id: null,
-            consumed: { $sum: { $cond: [{ $eq: ['$consumerId', userId] }, '$amount', 0] } },
-            produced: { $sum: { $cond: [{ $eq: ['$prosumerId', userId] }, '$amount', 0] } },
+          {
+            $group: {
+              _id: null,
+              consumed: { $sum: { $cond: [{ $eq: ['$consumerId', userId] }, '$amount', 0] } },
+              produced: { $sum: { $cond: [{ $eq: ['$prosumerId', userId] }, '$amount', 0] } },
+            },
           },
-        },
-      ];
-      i++;
+        ]),
+      );
     }
 
-    const [results] = await this.transactionsModel.aggregate([{ $facet: pipeline }]);
     return Object.values(results)
       .map((el) => ({ produced: el[0]?.produced ?? 0, consumed: el[0]?.consumed ?? 0 }))
       .reverse();
@@ -214,7 +212,7 @@ export class TransactionsService {
           moneyFromCommunity: {
             $sum: {
               $cond: [
-                { $eq: ['$prosumerId', userId] },
+                { $and: [{ $eq: ['$prosumerId', userId] }, { $ne: ['$consumerId', null] }] },
                 { $multiply: ['$amount', '$pricePerKw'] },
                 0,
               ],
@@ -223,21 +221,16 @@ export class TransactionsService {
         },
       },
     ]);
-    const { fromCommunity, toPublicGrid, fromPublicGrid } = await this.findAmountsFlowByUserId(
-      userId,
-      start,
-      end,
-    );
+    const { toPublicGrid, fromPublicGrid } = await this.findAmountsFlowByUserId(userId, start, end);
     const usedEnergy = Math.abs((result?.produced ?? 0) - (result?.consumed ?? 0));
 
     return {
       usedEnergy,
       emmitedCo2: usedEnergy * 0.475,
-      savedMoney:
-        fromCommunity * 0.21 +
-        (result?.moneyFromCommunity ?? 0) +
+      moneySpent:
+        (result?.moneyFromCommunity ?? 0) -
         (result?.moneyToCommunity ?? 0) +
-        Math.max(toPublicGrid * 0.21 - fromPublicGrid * 0.21, 0),
+        (fromPublicGrid * 0.21 - toPublicGrid * 0.21),
     };
   }
 

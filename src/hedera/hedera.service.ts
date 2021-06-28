@@ -25,7 +25,7 @@ export class HederaService {
       const transaction = await this.fetchTransactionByHash(hash);
       const isCorrectSender = !!transaction.transfers.find((t) => t.account === fromId);
       const isCorrectReceiver = !!transaction.transfers.find(
-        (t) => t.account === toId && t.amount === amount * 100000000,
+        (t) => t.account === toId && t.amount.toFixed(5) === (amount * 100000000).toFixed(5),
       );
 
       return (

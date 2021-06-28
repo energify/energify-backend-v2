@@ -83,8 +83,14 @@ export class PaymentsService {
     maxPrice: number = Number.MAX_SAFE_INTEGER,
     date?: Date,
   ) {
+    const or = [];
+    type === 'buy' ? or.push({ consumerId: userId }) : undefined;
+    type === 'sell' ? or.push({ prosumerId: userId }) : undefined;
+    type === 'all' ? or.push({ consumerId: userId }) : undefined;
+    type === 'all' ? or.push({ prosumerId: userId }) : undefined;
+
     const conditions: FilterQuery<Payment> = {
-      $or: [{ consumerId: userId }, { prosumerId: userId }],
+      $or: or,
       amount: { $gte: minPrice, $lte: maxPrice },
       issuedAt: {
         $gte: isValid(date) ? date : new Date('01-01-1970'),

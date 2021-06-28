@@ -19,7 +19,8 @@ export class UsersService {
   }
 
   async findById(id: Types.ObjectId) {
-    return this.userModel.findById(id);
+    const user = await this.userModel.findById(id);
+    return user;
   }
 
   async findByEmail(email: string) {

@@ -20,7 +20,7 @@ export abstract class MatchingPolicy {
 
         for (const sell of sells) {
           if (buy.value === 0) break;
-          else if (sell.value === 0) break;
+          else if (sell.value === 0) continue;
 
           const supplied = Math.min(Math.abs(buy.value), sell.value);
           buy.value += supplied;
@@ -34,14 +34,15 @@ export abstract class MatchingPolicy {
           });
         }
 
-        if (buy.value === 0) break;
-        matches.push({
-          value: buy.value * -1,
-          consumerId: buy.userId,
-          prosumerId: undefined,
-          matchedAt: buy.measuredAt,
-          pricePerKw: 0.21,
-        });
+        if (buy.value !== 0) {
+          matches.push({
+            value: buy.value * -1,
+            consumerId: buy.userId,
+            prosumerId: undefined,
+            matchedAt: buy.measuredAt,
+            pricePerKw: 0.21,
+          });
+        }
       }
     }
 
