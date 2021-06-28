@@ -39,7 +39,7 @@ export class MeasuresService {
     });
   }
 
-  @Interval(1000)
+  @Interval(1)
   @NoOverlap()
   async match() {
     const timestamp = Array.from(this.cache.keys())[0];
