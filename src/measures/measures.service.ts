@@ -26,17 +26,24 @@ export class MeasuresService {
     private transactionsService: TransactionsService,
   ) {}
 
-  store(userId: Types.ObjectId, dto: StoreMeasureDto) {
+  async store(userId: Types.ObjectId, dto: StoreMeasureDto) {
     if (!this.cache.has(dto.timestamp)) {
       this.cache.set(dto.timestamp, []);
     }
-
+    var id_tmp = new Types.ObjectId().toHexString()
     this.cache.get(dto.timestamp).push({
       ...dto,
-      id: new Types.ObjectId().toHexString(),
+      id: id_tmp,
       userId,
       measuredAt: fromUnixTime(dto.timestamp),
     });
+
+    return this.measureModel.create({
+      value: dto.value,
+      id: id_tmp,
+      userId,
+      measuredAt: fromUnixTime(dto.timestamp),
+    })
   }
 
   @Interval(1)
